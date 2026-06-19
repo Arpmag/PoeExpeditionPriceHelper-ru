@@ -2,22 +2,22 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
     <RootNamespace>PoeExpeditionPriceHelper</RootNamespace>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <!-- Declares Per-Monitor-V2 DPI awareness at process start (see app.manifest, issue #8). -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyTitle>Помощник цен Экспедиции PoE 2</AssemblyTitle>
-    <Product>Помощник цен Экспедиции PoE 2</Product>
-    <Description>Оверлей для Path of Exile 2 (русский клиент): OCR панели обмена валюты и цены Экспедиции с poe.ninja.</Description>
-    <Version>1.0.0</Version>
-    <Authors>pedro</Authors>
-    <Company>pedro</Company>
-    <Copyright>Copyright © 2026 pedro</Copyright>
+    <Product>PoeExpeditionPriceHelper</Product>
+    <Description>Русский форк Poe Ancients Price Helper — оверлей цен для панели обмена PoE 2 (клиент RU, poe.ninja).</Description>
+    <Version>2.0.0</Version>
+    <Authors>Arpmag (fork); pedro-quiterio (original)</Authors>
+    <Company>Arpmag</Company>
+    <Copyright>Copyright © 2026 — fork based on pedro-quiterio/PoeAncientsPriceHelper</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,23 +25,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Data\expedition_aliases.json" />
+    <EmbeddedResource Include="Data\game_aliases.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="PoeExpeditionPriceHelper.Tests" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MahApps.Metro" Version="2.4.10" />
+    <PackageReference Include="MahApps.Metro" Version="2.4.11" />
     <PackageReference Include="SharpHook" Version="7.1.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Tesseract" Version="5.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="tessdata\rus.traineddata" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Data\expedition_aliases.json" />
-    <EmbeddedResource Include="Data\game_aliases.json" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.DXGI" Version="3.8.3" />
   </ItemGroup>
 
 </Project>

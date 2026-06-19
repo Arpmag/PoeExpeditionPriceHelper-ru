@@ -71,6 +71,6 @@ public class RussianNameResolverTests
     [Fact]
     public void NormalizeName_PreservesCyrillic()
     {
-        Assert.Equal("журнал экспедиции", OcrScanner.NormalizeName("Журнал Экспедиции"));
+        Assert.Equal("журнал экспедиции", NameNormalizer.Normalize("Журнал Экспедиции"));
     }
 }

@@ -1,38 +1,79 @@
-# Poe Expedition Price Helper (RU)
+# Poe Ancients Price Helper
 
-Русская версия [**Poe Ancients Price Helper**](https://github.com/pedro-quiterio/PoeAncientsPriceHelper) для **Path of Exile 2** (русский клиент).
-
-Оригинал: [pedro-quiterio/PoeAncientsPriceHelper](https://github.com/pedro-quiterio/PoeAncientsPriceHelper) · [Releases](https://github.com/pedro-quiterio/PoeAncientsPriceHelper/releases)  
-**Английский клиент** → скачивайте оригинал, не этот репозиторий.
-
-Оверлей читает список предметов в игре (OCR на русском), подтягивает цены с [poe.ninja](https://poe.ninja/poe2) и рисует их рядом с каждой строкой.
+A lightweight screen overlay for **Path of Exile 2**. It watches a calibrated region of your screen,
+reads the currency / reward list with OCR, looks up live prices from [poe.ninja](https://poe.ninja/poe2),
+and draws a click-through price overlay next to each item — so you never have to alt-tab to check what a
+stack is worth.
 
 ## Features
 
-- **Live prices** с poe.ninja (обновление каждые 30 минут)
-- **Экспедиция** — журналы, расплавы, саги, реликты, знаки
-- **Рунотворческие комбинации** — руны, сферы, сплавы
-- **Стеки** — итог и цена за штуку, например `2 (0.5 за шт.)`
-- **Неогранённые камни** — по точному типу и уровню
-- **Калибровка один раз** — обвести список предметов в игре
-- **Горячие клавиши:** `F5` старт/стоп · `F4` калибровка · `F3` отладка · `Esc` / `Ctrl+клик` скрыть
-- **Сворачивание в трей** — сканирование продолжается в фоне
+- **Live prices** next to each list row, sourced from poe.ninja (auto-refreshed every 30 minutes).
+- **Stack-aware** — shows the total and the per-item price, e.g. `2 (0.5 each)`.
+- **Uncut gems** (skill / spirit / support) priced by exact type **and level** — a row shows `?`
+  rather than a guessed price if the gem type or level can't be read cleanly (neighbouring levels
+  can differ several-fold, so a wrong-level price would be misleading).
+- **GPU-accelerated capture** — uses Windows Graphics Capture (WGC) by default for low CPU usage,
+  with automatic fallback to legacy GDI if WGC is unavailable.
+- **Windows OCR engine** — uses the native `Windows.Media.Ocr` (WinRT) for fast, accurate detection
+  of on-screen text. No external OCR dependencies.
+- **Update notifications** — checks GitHub on startup and shows a link in the app when a newer
+  release is available.
+- **Click-through overlay** that never gets in the way of the game.
+- **One-time calibration** — just drag a box around the in-game list panel.
+- **Hotkeys:** `F5` start/stop · `F4` recalibrate · `F3` debug boxes · `Esc` / `Ctrl+Click` hide.
+- **Minimize to tray** — scanning keeps running in the background.
 
 ## Download & run
 
-Скачайте последний `PoeExpeditionPriceHelper-vX.Y.Z-win-x64.zip` на странице [**Releases**](../../releases), распакуйте и запустите **`Start.cmd`**. .NET ставить не нужно.
+Grab the latest `PoeAncientsPriceHelper-vX.Y.Z-win-x64.zip` from the
+[**Releases**](../../releases) page, unzip it anywhere, and double-click **`Start.cmd`**.
+No install and no .NET runtime required — it's a self-contained Windows x64 build.
 
-> Windows SmartScreen может предупредить (приложение не подписано) — **Подробнее → Выполнить в любом случае**.
+Full usage instructions (with screenshots) are in the `README.html` included in the download.
+
+> Windows SmartScreen may warn that the app is unsigned — click **More info → Run anyway**.
 
 ## Build from source
 
-Требуется [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+Requires the **.NET 10 SDK** ([download](https://dotnet.microsoft.com/en-us/download/dotnet/10.0))
+and **Windows 10 version 2004+** / Windows 11.
 
 ```sh
-dotnet test PoeExpeditionPriceHelper.sln
-dotnet publish src/PoeExpeditionPriceHelper/ -c Release -r win-x64 --self-contained true -o publish
+# restore + build
+dotnet build src/
+
+# run tests
+dotnet test src/PoeAncientsPriceHelper.Tests/
+
+# build a self-contained release
+dotnet publish src/PoeAncientsPriceHelper/ -c Release -r win-x64 --self-contained true -o publish
 ```
+
+## Capture backend
+
+The screen capture method is configurable via `config.json`:
+
+| Value | Description |
+|---|---|
+| `"Auto"` (default) | Uses WGC (GPU-based) with automatic GDI fallback per frame |
+| `"GDI"` | Forces legacy BitBlt capture (higher CPU, universal compatibility) |
+
+WGC requires Windows 10 2004+. If WGC fails at runtime, the app silently falls back to GDI without
+crashing.
 
 ## Tech
 
-WPF + WinForms overlay, Tesseract OCR (`rus`), .NET 8. Основа — [PoeAncientsPriceHelper](https://github.com/pedro-quiterio/PoeAncientsPriceHelper) by **pedro-quiterio**.
+- **.NET 10** (`net10.0-windows10.0.19041.0`) — WPF (settings window) + WinForms (overlay)
+- **Windows.Media.Ocr** (WinRT) for OCR — no external dependencies
+- **Windows Graphics Capture** via Vortice.Direct3D11 + WinRT interop for screen capture
+- **poe.ninja** API for live price data (parallel fetch over HTTP/2, 30-min auto-refresh)
+- **SharpHook** for global hotkeys
+- **MahApps.Metro** for the settings window UI
+
+## Support
+
+If this tool saves you some alt-tabbing, there's a **☕ Buy me a coffee** button right in the app.
+Thanks!
+
+## Disclaimer for those who seem to be troubled by it.. 
+Yes it was greatly helped by AI :D never the less it works and its free!

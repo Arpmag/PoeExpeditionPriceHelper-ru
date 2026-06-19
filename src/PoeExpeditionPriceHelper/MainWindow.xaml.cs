@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Windows;
 using MahApps.Metro.Controls;
@@ -13,8 +14,25 @@ public partial class MainWindow : MetroWindow
     private ScanEngine? _engine;
     // 15s cap so a stalled poe.ninja/poecdn connection can't hang a whole fetch cycle for the
     // default 100s. Per-fetch cancellation (shutdown) is handled inside PriceRepository.
-    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
+    // HTTP/2 + compression enabled for faster parallel fetches (5 concurrent requests multiplexed
+    // over a single connection instead of 5 separate TCP handshakes).
+    private readonly HttpClient _http = new(new SocketsHttpHandler
+    {
+        AutomaticDecompression = System.Net.DecompressionMethods.All,
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+        MaxConnectionsPerServer = 4
+    })
+    {
+        Timeout = TimeSpan.FromSeconds(15),
+        DefaultRequestVersion = HttpVersion.Version20,
+        DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower
+    };
     private bool _loading;
+    // Reentrancy guard for LeagueBox_SelectionChanged → StartupAsync (rapid league changes could
+    // otherwise overlap and dispose repo/icons mid-fetch). Also remembers whether the scanner was
+    // running before a league change so StartupAsync can restart it against the new repo/icons.
+    private bool _startingUp;
+    private bool _engineWasRunning;
 
     // Minimize-to-tray (#2). The window hides to a tray icon on minimize and restores from it; the X
     // button still fully exits. Scanning is independent of this window, so it keeps running in the tray.
@@ -55,7 +73,7 @@ public partial class MainWindow : MetroWindow
             if (current is null) return;
 
             var req = new HttpRequestMessage(HttpMethod.Get,
-                "https://api.github.com/repos/pedro-quiterio/PoeExpeditionPriceHelper/releases/latest");
+                "https://api.github.com/repos/Arpmag/PoeExpeditionPriceHelper-ru/releases/latest");
             req.Headers.TryAddWithoutValidation("User-Agent", "PoeExpeditionPriceHelper");  // GitHub 403s without one
             req.Headers.TryAddWithoutValidation("Accept", "application/vnd.github+json");
 
@@ -74,7 +92,7 @@ public partial class MainWindow : MetroWindow
             if (rem <= cur) return;
 
             _updateUrl = (string?)obj["html_url"];
-            Dispatcher.BeginInvoke(() =>
+            _ = Dispatcher.BeginInvoke(() =>
             {
                 UpdateLink.Text = $"⬆ Доступно обновление: v{rem.Major}.{rem.Minor}.{rem.Build} — нажмите для загрузки";
                 UpdateLink.Visibility = Visibility.Visible;
@@ -129,6 +147,17 @@ public partial class MainWindow : MetroWindow
         StatusLabel.Text = "Загрузка цен с poe.ninja…";
         StartStopButton.IsEnabled = false;
 
+        // Stop the scanner before disposing the repo/icons it depends on (league change, initial load).
+        // Otherwise a running ScanEngine keeps referencing the OLD repo (stale prices) and icons
+        // (disposed IconCache → crashes/stale icons).
+        _engineWasRunning = _engine is { IsRunning: true };
+        if (_engine is not null)
+        {
+            _engine.StopAndWait(TimeSpan.FromSeconds(2));
+            _engine.Dispose();
+            _engine = null;
+        }
+
         _repo?.Dispose();
         _icons?.Dispose();
 
@@ -144,6 +173,21 @@ public partial class MainWindow : MetroWindow
 
         UpdateStatusLabel();
         StartStopButton.IsEnabled = _config.IsCalibrated;
+
+        // If the scanner was running before the league change, restart it with the new repo/icons.
+        if (_engineWasRunning && _config.IsCalibrated)
+        {
+            _engine = new ScanEngine(_config, _repo, _icons, CreateCaptureBackend());
+            _engine.Start();
+            StartStopButton.Content = "Стоп";
+            StartStopButton.Background = System.Windows.Media.Brushes.DarkRed;
+        }
+        else
+        {
+            StartStopButton.Content = "Старт";
+            StartStopButton.Background = System.Windows.Media.Brushes.DarkGreen;
+        }
+        _engineWasRunning = false;
     }
 
     // The 30-min background refresh fires on a thread-pool thread — marshal to the UI thread
@@ -181,6 +225,7 @@ public partial class MainWindow : MetroWindow
         if (wasRunning)
         {
             _engine!.StopAndWait(TimeSpan.FromSeconds(2));
+            _engine.Dispose();
             _engine = null;
             PriceOverlayManager.Hide();
         }
@@ -193,7 +238,7 @@ public partial class MainWindow : MetroWindow
             StartStopButton.IsEnabled = _config.IsCalibrated;
             if (wasRunning && _repo is not null && _icons is not null)
             {
-                _engine = new ScanEngine(_config, _repo, _icons);
+                _engine = new ScanEngine(_config, _repo, _icons, CreateCaptureBackend());
                 _engine.Start();
                 StartStopButton.Content = "Стоп";
                 StartStopButton.Background = System.Windows.Media.Brushes.DarkRed;
@@ -205,6 +250,13 @@ public partial class MainWindow : MetroWindow
 
     private void StartStopButton_Click(object sender, RoutedEventArgs e) => ToggleStartStop();
 
+    // Selects the screen-capture backend based on config. "GDI" forces legacy BitBlt;
+    // "Auto"/"WGC" use Windows Graphics Capture (GPU) with built-in GDI fallback per call.
+    private IScreenCaptureBackend CreateCaptureBackend() =>
+        _config.CaptureBackend == "GDI"
+            ? new GdiScreenCaptureBackend()
+            : new WgcScreenCaptureBackend();
+
     // Shared by the Start/Stop button and the configurable global hotkey (invoked via App, marshalled
     // to the UI thread). internal so the App-level hook can reach it.
     internal void ToggleStartStop()
@@ -213,7 +265,7 @@ public partial class MainWindow : MetroWindow
         {
             // The hotkey can fire even when the button is disabled — don't start until we're ready.
             if (!_config.IsCalibrated || _repo is null || _icons is null) return;
-            _engine = new ScanEngine(_config, _repo, _icons);
+            _engine = new ScanEngine(_config, _repo, _icons, CreateCaptureBackend());
             _engine.Start();
             StartStopButton.Content = "Стоп";
             StartStopButton.Background = System.Windows.Media.Brushes.DarkRed;
@@ -293,9 +345,20 @@ public partial class MainWindow : MetroWindow
     private async void LeagueBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (_loading || LeagueBox.SelectedItem is not string league || league == _config.LeagueName) return;
-        _config.LeagueName = league;
-        ConfigStore.Save(_config);
-        await StartupAsync();   // re-fetch prices for the newly selected league
+        if (_startingUp) return;  // prevent overlapping StartupAsync calls (rapid league changes)
+        _startingUp = true;
+        try
+        {
+            LeagueBox.IsEnabled = false;  // disable during reload
+            _config.LeagueName = league;
+            ConfigStore.Save(_config);
+            await StartupAsync();   // re-fetch prices for the newly selected league
+        }
+        finally
+        {
+            LeagueBox.IsEnabled = true;
+            _startingUp = false;
+        }
     }
 
     // The rebind in progress: which action, and the button/label to update. Only one runs at a time.
