@@ -1,0 +1,10 @@
+bin/
+obj/
+publish/
+Program/
+*.user
+.vs/
+scan_log.txt
+config.json
+debug_ocr.png
+*.zip

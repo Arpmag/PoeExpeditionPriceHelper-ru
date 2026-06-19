@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>PoeExpeditionPriceHelper</RootNamespace>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <!-- Declares Per-Monitor-V2 DPI awareness at process start (see app.manifest, issue #8). -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyTitle>Помощник цен Экспедиции PoE 2</AssemblyTitle>
+    <Product>Помощник цен Экспедиции PoE 2</Product>
+    <Description>Оверлей для Path of Exile 2 (русский клиент): OCR панели обмена валюты и цены Экспедиции с poe.ninja.</Description>
+    <Version>1.0.0</Version>
+    <Authors>pedro</Authors>
+    <Company>pedro</Company>
+    <Copyright>Copyright © 2026 pedro</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PoeExpeditionPriceHelper.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro" Version="2.4.10" />
+    <PackageReference Include="SharpHook" Version="7.1.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="tessdata\rus.traineddata" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Data\expedition_aliases.json" />
+    <EmbeddedResource Include="Data\game_aliases.json" />
+  </ItemGroup>
+
+</Project>

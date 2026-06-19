@@ -1,0 +1,53 @@
+{
+  "_source": "https://poe2db.tw/ru/Expedition — Russian BaseType → poe.ninja normalized English key",
+  "aliases": {
+    "журнал экспедиции": "expedition logbook",
+    "журнал макору": "expedition logbook",
+    "журнал вораны": "expedition logbook",
+    "журнал утреда": "expedition logbook",
+    "журнал олрота": "expedition logbook",
+    "плитка экспедиции": "expedition precursor tablet",
+    "забытые временем плитка экспедиции": "forgotten by time expedition precursor tablet",
+    "диковинные монеты": "exotic coinage",
+
+    "сага альдура": "aldur s saga",
+    "сага медведя": "medved s saga",
+    "сага олрота": "olroth s saga",
+    "сага утреда": "uhtred s saga",
+    "сага вораны": "vorana s saga",
+
+    "пустотный расплав": "void flux",
+    "жгучий расплав": "blazing flux",
+    "студеный расплав": "chilling flux",
+    "студёный расплав": "chilling flux",
+    "искрящий расплав": "crackling flux",
+    "сфера узазы": "perfect flux",
+
+    "артефакт чёрной косы": "black scythe artifact",
+    "артефакт черной косы": "black scythe artifact",
+    "артефакт разомкнутого круга": "broken circle artifact",
+    "артефакт ордена": "order artifact",
+    "артефакт солнца": "sun artifact",
+
+    "знак круга медведя": "medved s crest of the circle",
+    "знак солнца олрота": "olroth s crest of the sun",
+    "знак чаши утреда": "uhtred s crest of the chalice",
+    "знак косы вораны": "vorana s crest of the scythe",
+
+    "страсть альдура": "passion of aldur",
+    "дыхание альдура": "breath of aldur",
+    "гнев альдура": "ire of aldur",
+    "предательство альдура": "betrayal of aldur",
+    "наследие альдура": "aldur s legacy",
+
+    "триумф серли": "serle s triumph",
+    "озарение кадигана": "cadigan s epiphany",
+    "изобретательность астрид": "astrid s creativity",
+    "сидерий утреда": "uhtred s sidereus",
+    "охота колра": "kolr s hunt",
+    "резня вораны": "vorana s carnage",
+    "сила трада": "thrud s might",
+    "присмотр медведя": "medved s tending",
+    "мрачность катлы": "katla s gloom"
+  }
+}
